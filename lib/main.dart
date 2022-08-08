@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -58,15 +60,18 @@ class _HomepageState extends State<Homepage> {
         return;
       }
     }
+    var geolocator = Geolocator();
 
-    location.onLocationChanged.listen((LocationData currentLocation) async {
-      _locationData = currentLocation;
-      if (kDebugMode) {
-        print(_locationData);
-      }
+    StreamSubscription<Position> positionStream =
+        Geolocator.getPositionStream().listen((Position position) async {
+      print(position == null
+          ? 'Unknown'
+          : position.latitude.toString() +
+              ', ' +
+              position.longitude.toString());
       await FirebaseFirestore.instance.collection('locations').doc("loc").set({
-        'latitude': _locationData!.latitude,
-        'longitude': _locationData!.longitude,
+        'latitude': position.latitude,
+        'longitude': position.longitude,
       });
       final data = await FirebaseFirestore.instance
           .collection('locations')
@@ -78,8 +83,29 @@ class _HomepageState extends State<Homepage> {
           print(model.latitude);
         }
       });
-      // Use current location
     });
+
+    // location.onLocationChanged.listen((LocationData currentLocation) async {
+    //   _locationData = currentLocation;
+    //   if (kDebugMode) {
+    //     print(_locationData);
+    //   }
+    //   await FirebaseFirestore.instance.collection('locations').doc("loc").set({
+    //     'latitude': _locationData!.latitude,
+    //     'longitude': _locationData!.longitude,
+    //   });
+    //   final data = await FirebaseFirestore.instance
+    //       .collection('locations')
+    //       .doc("test")
+    //       .get()
+    //       .then((value) {
+    //     Model model = Model.fromJson(value.data());
+    //     if (kDebugMode) {
+    //       print(model.latitude);
+    //     }
+    //   });
+    //   // Use current location
+    // });
   }
 
   @override
