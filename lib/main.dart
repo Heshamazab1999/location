@@ -1,20 +1,17 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:get_location/Model.dart';
-
-// import 'package:geolocator/geolocator.dart';
-// import 'package:geocoding/geocoding.dart';
 import 'package:location/location.dart';
 import 'package:lottie/lottie.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
   runApp(MyApp());
 }
 
@@ -64,48 +61,25 @@ class _HomepageState extends State<Homepage> {
 
     StreamSubscription<Position> positionStream =
         Geolocator.getPositionStream().listen((Position position) async {
+      final deviceInfoPlugin = DeviceInfoPlugin();
+      final deviceInfo = await deviceInfoPlugin.deviceInfo;
+      final map = deviceInfo.toMap();
+      final deviceId = map['id'];
+      print(deviceId);
+
       print(position == null
           ? 'Unknown'
           : position.latitude.toString() +
               ', ' +
               position.longitude.toString());
-      await FirebaseFirestore.instance.collection('locations').doc("loc").set({
+      await FirebaseFirestore.instance
+          .collection('locations')
+          .doc(deviceId)
+          .set({
         'latitude': position.latitude,
         'longitude': position.longitude,
       });
-      final data = await FirebaseFirestore.instance
-          .collection('locations')
-          .doc("test")
-          .get()
-          .then((value) {
-        Model model = Model.fromJson(value.data());
-        if (kDebugMode) {
-          print(model.latitude);
-        }
-      });
     });
-
-    // location.onLocationChanged.listen((LocationData currentLocation) async {
-    //   _locationData = currentLocation;
-    //   if (kDebugMode) {
-    //     print(_locationData);
-    //   }
-    //   await FirebaseFirestore.instance.collection('locations').doc("loc").set({
-    //     'latitude': _locationData!.latitude,
-    //     'longitude': _locationData!.longitude,
-    //   });
-    //   final data = await FirebaseFirestore.instance
-    //       .collection('locations')
-    //       .doc("test")
-    //       .get()
-    //       .then((value) {
-    //     Model model = Model.fromJson(value.data());
-    //     if (kDebugMode) {
-    //       print(model.latitude);
-    //     }
-    //   });
-    //   // Use current location
-    // });
   }
 
   @override
